@@ -1,8 +1,10 @@
 import { db } from "./db";
 import { assessments, type Assessment, type InsertAssessment } from "@shared/schema";
+import { desc } from "drizzle-orm";
 
 export interface IStorage {
-  getAssessments(): Promise<Assessment[]>;
+  getAssessments(limit?: number, offset?: number): Promise<Assessment[]>;
+
   createAssessment(assessment: InsertAssessment & { 
     riskScore: string, 
     riskCategory: string, 
@@ -13,8 +15,16 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  async getAssessments(): Promise<Assessment[]> {
-    return await db.select().from(assessments);
+  async getAssessments(
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<Assessment[]> {
+    return await db
+      .select()
+      .from(assessments)
+      .orderBy(desc(assessments.createdAt))
+      .limit(limit)
+      .offset(offset);
   }
 
   async createAssessment(assessment: InsertAssessment & { 
